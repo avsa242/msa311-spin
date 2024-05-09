@@ -9,12 +9,17 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the MSA311 
 ## Salient Features
 
 * I2C connection at up to 400kHz (unenforced)
+* Set full-scale range
+* Set operating mode
+* Read acceleration in ADC words, g's
 
 
 ## Requirements
 
 P1/SPIN1:
 * spin-standard-library
+* sensor.accel.common.spinh (provided by the spin-standard-library)
+
 
 P2/SPIN2:
 * p2-spin-standard-library
