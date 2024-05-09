@@ -4,7 +4,7 @@
     Description:    Demo of the MSA311 driver
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 7, 2024
+    Updated:        May 9, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -23,12 +23,16 @@ OBJ
     sensor: "sensor.accel.3dof.msa311" | SCL=28, SDA=29, I2C_FREQ=400_000
 
 
-PUB main()
+PUB main() | x, y, z
 
     setup()
-    ser.printf1(@"partid: %02.2x\n\r", sensor.dev_id())
-    repeat
 
+    sensor.opmode(sensor.NORMAL)
+    repeat
+        x := y := z := 0
+        sensor.accel_data(@x, @y, @z)
+        ser.pos_xy(0, 3)
+        ser.printf3(@"x=%08.8x, y=%08.8x, z=%08.8x", x, y, z)
 
 PUB setup()
 

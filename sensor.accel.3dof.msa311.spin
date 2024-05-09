@@ -4,7 +4,7 @@
     Description:    Driver for the MEMSensing Microsystems MSA311 accelerometer
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 7, 2024
+    Updated:        May 9, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -24,6 +24,7 @@ CON
     DEF_SDA     = 29
     DEF_HZ      = 100_000
     I2C_MAX_FREQ= core.I2C_MAX_FREQ
+
 
 VAR
 
@@ -71,11 +72,46 @@ PUB defaults()
 ' Set factory defaults
 
 
+PUB accel_data(ptr_x, ptr_y, ptr_z) | tmp[2]
+' Read accelerometer data
+'   ptr_x, ptr_y, ptr_z: pointers to copy accelerometer data to
+'   NOTE: Data is signed 12-bit, sign extended to 32-bit
+    tmp[0] := tmp[1] := 0
+    readreg(core.X_AXIS, 6, @tmp)
+    long[ptr_x] := ~~tmp.word[0] ~> 4           ' extend sign and right-justify
+    long[ptr_y] := ~~tmp.word[1] ~> 4
+    long[ptr_z] := ~~tmp.word[2] ~> 4
+
+
 PUB dev_id(): id
 ' Read device identification
 '   Returns: $13 if the device was detected
     id := 0
     readreg(core.PARTID, 1, @id)
+
+
+CON
+
+    { operating modes }
+    NORMAL  = 0
+    LOW_PWR = 1
+    SUSPEND = 3
+
+PUB opmode(m): s
+' Set device operating mode
+'   NORMAL (0):     normal/measurements active
+'   LOW_PWR (1):    low-power mode
+'   SUSPEND (3):    suspend (retain settings, but measuring is halted)
+'   Returns:
+'       current setting if another value is used
+    s := 0
+    readreg(core.PWR_MODE_BW, 1, @s)
+    case m
+        NORMAL, LOW_PWR, SUSPEND:
+            m := (s & core.PWR_MODE_MASK) | m
+            writereg(core.PWR_MODE_BW, 1, @m)
+        other:
+            return ((s >> core.PWR_MODE) & core.PWR_MODE_BITS)
 
 
 PUB reset()
