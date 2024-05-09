@@ -28,6 +28,8 @@ PUB main() | x, y, z
     setup()
 
     sensor.opmode(sensor.NORMAL)
+    sensor.accel_scale(2)
+    ser.printf1(@"scale: %d\n\r", sensor.accel_scale())
     repeat
         x := y := z := 0
         sensor.accel_data(@x, @y, @z)

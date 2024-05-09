@@ -28,6 +28,8 @@ CON
 
 VAR
 
+    long _ares
+
 
 OBJ
 
@@ -81,6 +83,23 @@ PUB accel_data(ptr_x, ptr_y, ptr_z) | tmp[2]
     long[ptr_x] := ~~tmp.word[0] ~> 4           ' extend sign and right-justify
     long[ptr_y] := ~~tmp.word[1] ~> 4
     long[ptr_z] := ~~tmp.word[2] ~> 4
+
+
+PUB accel_scale(s=0): c | s_bits
+' Set accelerometer full-scale range, in g's
+'   s: 2, 4, 8, 16
+'   Returns:
+'       current setting if another value is used
+    c := 0
+    readreg(core.RANGE, 1, @c)
+    case s
+        2, 4, 8, 16:
+            s_bits := lookdownz(s: 2, 4, 8, 16) ' 2..16 -> %00..%11
+            _ares := lookupz(s_bits: 0_000976, 0_001953, 0_003906, 0_007812)
+            s := (c & core.FS_MASK) | s_bits
+            writereg(core.RANGE, 1, @s)
+        other:
+            return lookupz((c & core.FS_BITS): 2, 4, 8, 16)
 
 
 PUB dev_id(): id

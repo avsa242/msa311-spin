@@ -61,19 +61,19 @@ CON
     RANGE_MASK                  = $03
         FS                      = 0
         FS_BITS                 = %11
-        FS_MASK                 = FS ^ RANGE_MASK
+        FS_MASK                 = FS_BITS ^ RANGE_MASK
 
     ODR_AXIS_ENA                = $10
     ODR_AXIS_ENAMASK            = $ef
         X_AXIS_DIS              = 7
-        X_AXIS_DIS_MASK         = X_AXIS_DIS ^ ODR_AXIS_ENAMASK
+        X_AXIS_DIS_MASK         = (1 << X_AXIS_DIS) ^ ODR_AXIS_ENAMASK
         Y_AXIS_DIS              = 6
-        Y_AXIS_DIS_MASK         = Y_AXIS_DIS ^ ODR_AXIS_ENAMASK
+        Y_AXIS_DIS_MASK         = (1 << Y_AXIS_DIS) ^ ODR_AXIS_ENAMASK
         Z_AXIS_DIS              = 5
-        Z_AXIS_DIS_MASK         = Z_AXIS_DIS ^ ODR_AXIS_ENAMASK
+        Z_AXIS_DIS_MASK         = (1 << Z_AXIS_DIS) ^ ODR_AXIS_ENAMASK
         XYZAXIS_DIS             = 5
         XYZAXIS_DIS_BITS        = %111
-        XYZAXIS_DIS_MASK        = XYZAXIS_DIS ^ ODR_AXIS_ENAMASK
+        XYZAXIS_DIS_MASK        = (XYZAXIS_DIS_BITS << XYZAXIS_DIS) ^ ODR_AXIS_ENAMASK
         ODR                     = 0
         ODR_BITS                = %1111
 
@@ -81,21 +81,21 @@ CON
     PWR_MODE_BW_MASK            = $de
         PWR_MODE                = 6
         PWR_MODE_BITS           = %11
-        PWR_MODE_MASK           = PWR_MODE ^ PWR_MODE_BW_MASK
+        PWR_MODE_MASK           = (PWR_MODE_BITS << PWR_MODE) ^ PWR_MODE_BW_MASK
         LOW_POWER_BW            = 1
         LOW_POWER_BW_BITS       = %1111
-        LOW_POWER_BW_MASK       = LOW_POWER_BW ^ PWR_MODE_BW_MASK
+        LOW_POWER_BW_MASK       = (LOW_POWER_BW_BITS << LOW_POWER_BW) ^ PWR_MODE_BW_MASK
 
     SWAP_POL                    = $12
     SWAP_POL_MASK               = $0f
         X_POLARITY              = 3
-        X_POLARITY_MASK         = X_POLARITY ^ SWAP_POL_MASK
+        X_POLARITY_MASK         = (1 << X_POLARITY) ^ SWAP_POL_MASK
         Y_POLARITY              = 2
-        Y_POLARITY_MASK         = Y_POLARITY ^ SWAP_POL_MASK
+        Y_POLARITY_MASK         = (1 << Y_POLARITY) ^ SWAP_POL_MASK
         Z_POLARITY              = 1
-        Z_POLARITY_MASK         = Z_POLARITY ^ SWAP_POL_MASK
+        Z_POLARITY_MASK         = (1 << Z_POLARITY) ^ SWAP_POL_MASK
         X_Y_SWAP                = 0
-        X_Y_SWAP_MASK           = X_Y_SWAP ^ SWAP_POL_MASK
+        X_Y_SWAP_MASK           = (1 << X_Y_SWAP) ^ SWAP_POL_MASK
 
     INT_SET_0                   = $16
     INT_SET_0_MASK              = $77
@@ -126,20 +126,24 @@ CON
     INT_CONFIG                  = $20
     INT_CONFIG_MASK             = $03
         INT1_OD                 = 1
-        INT1_OD_MASK            = INT1_OD ^ INT_CONFIG_MASK
+        INT1_OD_MASK            = (1 << INT1_OD) ^ INT_CONFIG_MASK
         INT1_LVL                = 0
-        INT1_LVL_MASK           = INT1_LVL ^ INT_CONFIG_MASK
+        INT1_LVL_MASK           = (1 << INT1_LVL) ^ INT_CONFIG_MASK
 
     INT_LATCH                   = $21
     INT_LATCH_MASK              = $0f
 
     FREEFALL_DUR                = $22
+
     FREEFALL_TH                 = $23
-    FREEFALL_HY                 = $24
-    FREEFALL_HY_MASK            = $07
+
+    FREEFALL_HYST               = $24
+    FREEFALL_HYST_MASK          = $07
         FREEFALL_MODE           = 2
-        FREEFALL_HYST           = 0
-        FREEFALL_HYST_BITS      = %11
+        FREEFALL_MODE_MASK      = (1 << FREEFALL_MODE) ^ FREEFALL_HYST_MASK
+        FREEFALL_HY             = 0
+        FREEFALL_HY_BITS        = %11
+        FREEFALL_HY_MASK        = (FREEFALL_HY_BITS << FREEFALL_HY) ^ FREEFALL_HYST_MASK
 
     ACTIVE_DUR                  = $27
     ACTIVE_DUR_MASK             = $03
@@ -149,12 +153,12 @@ CON
     TAP_DUR_QS                  = $2a
     TAP_DUR_QS_MASK             = $c7
         TAP_QUIET               = 7
-        TAP_QUIET_MASK          = TAP_QUIET ^ TAP_DUR_QS_MASK
+        TAP_QUIET_MASK          = (1 << TAP_QUIET) ^ TAP_DUR_QS_MASK
         TAP_SHOCK               = 6
-        TAP_SHOCK_MASK          = TAP_SHOCK ^ TAP_DUR_QS_MASK
+        TAP_SHOCK_MASK          = (1 << TAP_SHOCK) ^ TAP_DUR_QS_MASK
         TAP_DUR                 = 0
         TAP_DUR_BITS            = %111
-        TAP_DUR_MASK            = TAP_DUR ^ TAP_DUR_QS_MASK
+        TAP_DUR_MASK            = (TAP_DUR_BITS << TAP_DUR) ^ TAP_DUR_QS_MASK
 
     TAP_TH                      = $2b
     TAP_TH_MASK                 = $1f
@@ -163,13 +167,13 @@ CON
     ORIENT_HY_MASK              = $7f
         ORIENT_HYST             = 4
         ORIENT_HYST_BITS        = %111
-        ORIENT_HYST_MASK        = ORIENT_HYST ^ ORIENT_HY_MASK
+        ORIENT_HYST_MASK        = (ORIENT_HYST_BITS << ORIENT_HYST) ^ ORIENT_HY_MASK
         ORIENT_BLOCKING         = 2
         ORIENT_BLOCKING_BITS    = %11
-        ORIENT_BLOCKING_MASK    = ORIENT_BLOCKING ^ ORIENT_HY_MASK
+        ORIENT_BLOCKING_MASK    = (ORIENT_BLOCKING_BITS << ORIENT_BLOCKING) ^ ORIENT_HY_MASK
         ORIENT_MODE             = 0
         ORIENT_MODE_BITS        = %11
-        ORIENT_MODE_MASK        = ORIENT_MODE ^ ORIENT_HY_MASK
+        ORIENT_MODE_MASK        = (ORIENT_MODE_BITS << ORIENT_MODE) ^ ORIENT_HY_MASK
 
     Z_BLOCK                     = $2d
     Z_BLOCK_MASK                = $0f
