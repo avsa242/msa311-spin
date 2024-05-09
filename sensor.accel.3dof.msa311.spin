@@ -9,6 +9,9 @@
 ----------------------------------------------------------------------------------------------------
 }
 
+#include "sensor.accel.common.spinh"            ' pull in code common to all accel drivers
+
+
 CON
 
     { default I/O configuration - these can be overridden by the parent object }
@@ -17,6 +20,14 @@ CON
     I2C_FREQ    = 400_000
 
 
+    ACCEL_DOF   = 3                             ' number of axes/degrees of freedom this sensor has
+
+    X_AXIS      = 0
+    Y_AXIS      = 1
+    Z_AXIS      = 2
+
+
+    { I2C-specific I/O }
     SLAVE_WR    = core.SLAVE_ADDR
     SLAVE_RD    = core.SLAVE_ADDR|1
 
@@ -26,9 +37,8 @@ CON
     I2C_MAX_FREQ= core.I2C_MAX_FREQ
 
 
-VAR
 
-    long _ares
+VAR
 
 
 OBJ
@@ -85,6 +95,15 @@ PUB accel_data(ptr_x, ptr_y, ptr_z) | tmp[2]
     long[ptr_z] := ~~tmp.word[2] ~> 4
 
 
+PUB accel_data_rate(r): c
+' TBD
+
+
+PUB accel_data_rdy(): f
+' TBD
+    return true
+
+
 PUB accel_scale(s=0): c | s_bits
 ' Set accelerometer full-scale range, in g's
 '   s: 2, 4, 8, 16
@@ -101,6 +120,9 @@ PUB accel_scale(s=0): c | s_bits
         other:
             return lookupz((c & core.FS_BITS): 2, 4, 8, 16)
 
+
+PUB accel_set_bias(x, y, z)
+' TBD
 
 PUB dev_id(): id
 ' Read device identification

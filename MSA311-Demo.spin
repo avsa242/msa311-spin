@@ -23,18 +23,37 @@ OBJ
     sensor: "sensor.accel.3dof.msa311" | SCL=28, SDA=29, I2C_FREQ=400_000
 
 
-PUB main() | x, y, z
+PUB main() | a[3], axis, sign
 
     setup()
 
     sensor.opmode(sensor.NORMAL)
     sensor.accel_scale(2)
-    ser.printf1(@"scale: %d\n\r", sensor.accel_scale())
+
     repeat
-        x := y := z := 0
-        sensor.accel_data(@x, @y, @z)
+        repeat until sensor.accel_data_rdy()
+        sensor.accel_g(@a[sensor.X_AXIS], @a[sensor.Y_AXIS], @a[sensor.Z_AXIS])
         ser.pos_xy(0, 3)
-        ser.printf3(@"x=%08.8x, y=%08.8x, z=%08.8x", x, y, z)
+        ser.str(@"Accel (g):  ")
+        repeat axis from sensor.X_AXIS to sensor.Z_AXIS
+            if ( a[axis] < 0 )
+                sign := "-"
+            else
+                sign := " "
+            ser.printf3(@"%c%d.%06.6d     ",    sign, ...
+                                                ||(a[axis] / 1_000_000), ...
+                                                ||(a[axis] // 1_000_000) )
+        ser.newline()
+
+
+PUB cal_accel()
+' Calibrate the accelerometer
+    ser.pos_xy(0, 5)
+    ser.str(@"Calibrating accelerometer...")
+    sensor.calibrate_accel()
+    ser.pos_xy(0, 5)
+    ser.clear_ln()
+
 
 PUB setup()
 
