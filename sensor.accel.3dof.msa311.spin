@@ -270,7 +270,8 @@ PUB reset() | tmp
 PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt
 ' Read nr_bytes from the device into ptr_buff
     case reg_nr                                 ' validate register num
-        $00..$FF:
+        $01..$07, $09..$0c, $0f..$12, $16, $17, $19, $1a, $20..$24, $27, $28, $2a..$2d, ...
+        $38..$3a:
             cmd_pkt.byte[0] := SLAVE_WR
             cmd_pkt.byte[1] := reg_nr
             i2c.start()
@@ -285,7 +286,7 @@ PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt
 PRI writereg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt
 ' Write nr_bytes to the device from ptr_buff
     case reg_nr
-        $00..$FF:
+        $00, $0f..$12, $16, $17, $19, $1a, $20..$24, $27, $28, $2a..$2d, $38..$3a:
             cmd_pkt.byte[0] := SLAVE_WR
             cmd_pkt.byte[1] := reg_nr
             i2c.start()
