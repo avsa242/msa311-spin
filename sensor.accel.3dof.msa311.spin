@@ -69,6 +69,7 @@ PUB startx(SCL_PIN, SDA_PIN, I2C_HZ): status
     if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) )
         if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
             time.usleep(core.T_POR)             ' wait for device startup
+            reset()
             if ( dev_id() == core.DEVID_RESP )  ' check for device response
                 return
     ' if this point is reached, something above failed
@@ -260,8 +261,10 @@ PUB opmode(m): s
             return ((s >> core.PWR_MODE) & core.PWR_MODE_BITS)
 
 
-PUB reset()
+PUB reset() | tmp
 ' Reset the device
+    tmp := core.RESET
+    writereg(core.SOFT_RESET, 1, @tmp)
 
 
 PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt
