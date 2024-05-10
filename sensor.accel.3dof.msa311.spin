@@ -100,8 +100,11 @@ PUB accel_data_rate(r): c
 
 
 PUB accel_data_rdy(): f
-' TBD
-    return true
+' Flag indicating new accelerometer data is available
+'   NOTE: To use this function, the interrupt INT_DATA_RDY must be set using accel_int_set_mask()
+    f := 0
+    readreg(core.DATA_INT, 1, @f)
+    return ( (f & 1) == 1 )
 
 
 PUB accel_scale(s=0): c | s_bits
@@ -114,7 +117,10 @@ PUB accel_scale(s=0): c | s_bits
     case s
         2, 4, 8, 16:
             s_bits := lookdownz(s: 2, 4, 8, 16) ' 2..16 -> %00..%11
-            _ares := lookupz(s_bits: 0_000976, 0_001953, 0_003906, 0_007812)
+            _ares := lookupz(s_bits:    0_000976, ...   ' set g's per LSB scaling
+                                        0_001953, ...
+                                        0_003906, ...
+                                        0_007812)
             s := (c & core.FS_MASK) | s_bits
             writereg(core.RANGE, 1, @s)
         other:
@@ -129,6 +135,40 @@ PUB dev_id(): id
 '   Returns: $13 if the device was detected
     id := 0
     readreg(core.PARTID, 1, @id)
+
+
+CON
+
+    { interrupts }
+    INT_DATA_RDY    = 1 << 12                   ' new data ready
+    INT_FREEFALL    = 1 << 11                   ' sensor is in free-fall
+    INT_ORIENT      = 1 << 6                    ' sensor orientation
+    INT_S_TAP       = 1 << 5                    ' single-tap
+    INT_D_TAP       = 1 << 4                    ' double-tap
+    INT_ACTIVE_Z    = 1 << 2                    ' active, z-axis
+    INT_ACTIVE_Y    = 1 << 1                    ' active, y-axis
+    INT_ACTIVE_X    = 1 << 0                    ' active, x-axis
+
+PUB accel_int_mask(): m
+' Get accelerometer interrupt mask
+    m := 0
+    readreg(core.INT_SET_0, 2, @m)
+
+
+PUB accel_int_set_mask(m)
+' Set accelerometer interrupt mask
+'   bits 12, 11, 6..4, 2..0 (all other bits are reserved and will be ignored if set)
+'       12: INT_DATA_RDY
+'       11: INT_FREEFALL
+'       6:  INT_ORIENT
+'       5:  INT_S_TAP
+'       4:  INT_D_TAP
+'       2:  INT_ACTIVE_Z
+'       1:  INT_ACTIVE_Y
+'       0:  INT_ACTIVE_X
+'   Returns: none
+    m &= core.INT_SET_MASK                      ' mask off reserved bits
+    writereg(core.INT_SET_0, 2, @m)             ' write INT_SET_0, INT_SET_1
 
 
 CON

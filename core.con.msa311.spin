@@ -4,7 +4,7 @@
     Description:    MSA311-specific constants
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 9, 2024
+    Updated:        May 10, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -110,6 +110,9 @@ CON
     INT_SET_1_MASK              = $18
         NEW_DATA_INT_EN         = 4
         FREEFALL_INT_EN         = 3
+
+    INT_SET_MASK                = (INT_SET_1_MASK << 8) | INT_SET_0_MASK
+
 
     INT_MAP_0                   = $19
     INT_MAP_0_MASK              = $75

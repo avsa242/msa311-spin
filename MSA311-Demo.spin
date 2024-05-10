@@ -4,7 +4,7 @@
     Description:    Demo of the MSA311 driver
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 9, 2024
+    Updated:        May 10, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -29,6 +29,7 @@ PUB main() | a[3], axis, sign
 
     sensor.opmode(sensor.NORMAL)
     sensor.accel_scale(2)
+    sensor.accel_int_set_mask(sensor.INT_DATA_RDY)
 
     repeat
         repeat until sensor.accel_data_rdy()
