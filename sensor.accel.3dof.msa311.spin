@@ -21,6 +21,8 @@ CON
 
 
     ACCEL_DOF   = 3                             ' number of axes/degrees of freedom this sensor has
+    CAL_XL_SCL  = 2                             ' scale to perform calibration at
+    CAL_XL_DR   = 64                            ' data rate to perform calibration at
 
     X_AXIS      = 0
     Y_AXIS      = 1
@@ -140,7 +142,16 @@ PUB accel_scale(s=0): c | s_bits
 
 
 PUB accel_set_bias(x, y, z)
-' TBD
+' Write accelerometer calibration offset values
+'   x, y, z: -128..127 (clamped to range)
+    x := -128 #> x <# 127
+    y := -128 #> y <# 127
+    z := -128 #> z <# 127
+
+    writereg(core.OFFSET_X, 1, @x)
+    writereg(core.OFFSET_Y, 1, @y)
+    writereg(core.OFFSET_Z, 1, @z)
+
 
 PUB dev_id(): id
 ' Read device identification

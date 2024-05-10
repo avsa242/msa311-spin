@@ -185,7 +185,10 @@ CON
     Z_BLOCK                     = $2d
     Z_BLOCK_MASK                = $0f
 
-    OFFSET_COMP                 = $38'..$3a     ' x, y, z
+    OFFSET_X                    = $38           ' 8 bits 1LSB = 3.9mg
+    OFFSET_Y                    = $39
+    OFFSET_Z                    = $3a
+
 
 
 PUB null()

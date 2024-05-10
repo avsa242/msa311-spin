@@ -44,6 +44,8 @@ PUB main() | a[3], axis, sign
                                                 ||(a[axis] / 1_000_000), ...
                                                 ||(a[axis] // 1_000_000) )
         ser.newline()
+        if ( ser.getchar_noblock() == "c" )
+            cal_accel()
 
 
 PUB cal_accel()
