@@ -56,6 +56,8 @@ CON
         ORIENT_Z                = 6
         ORIENT_XY               = 4
         ORIENT_XY_BITS          = %11
+        ORIENT_XYZ              = 4
+        ORIENT_XYZ_BITS         = %111
 
     RANGE                       = $0f
     RANGE_MASK                  = $03

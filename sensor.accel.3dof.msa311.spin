@@ -261,6 +261,34 @@ PUB opmode(m): s
             return ((s >> core.PWR_MODE) & core.PWR_MODE_BITS)
 
 
+CON
+
+    { orientation }
+    PORT_UP_FR      = 0
+    PORT_DOWN_FR    = 1
+    LAND_LT         = 2
+    LAND_RT         = 3
+    Z_UP            = 0
+    Z_DOWN          = 1
+
+PUB orientation(): o
+' Get device orientation
+'   Returns:
+'       bits 1..0:
+'           PORT_UP_FR (0):     portrait upright
+'           PORT_DOWN_FR (1):   portrait upside-down
+'           LAND_LT (2):        landscape left
+'           LAND_RT (3):        landscape right
+'       bit 2:
+'           Z_UP (0):           upward looking
+'           Z_DOWN (1):         downward looking
+'   NOTE: INT_ORIENT must be set using accel_int_set_mask() in order for this method to
+'       return valid data.
+    o := 0
+    readreg(core.ORIENTATION_ST, 1, @o)
+    return (o >> core.ORIENT_XYZ)
+
+
 PUB reset() | tmp
 ' Reset the device
     tmp := core.RESET

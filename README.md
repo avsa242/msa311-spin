@@ -14,6 +14,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the MSA311 
 * Set output data rate
 * Interrupts: set, read mask (data ready, free-fall, orientation, single/double-tap, active-z, y, x)
 * Read acceleration in ADC words, g's
+* Read sensor orientation (portrait, landscape, up/down)
 
 
 ## Requirements
