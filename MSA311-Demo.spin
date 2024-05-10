@@ -29,6 +29,7 @@ PUB main() | a[3], axis, sign
     sensor.opmode(sensor.NORMAL)
     sensor.accel_scale(2)
     sensor.accel_int_set_mask(sensor.INT_DATA_RDY)
+
     repeat
         repeat until sensor.accel_data_rdy()
         sensor.accel_g(@a[sensor.X_AXIS], @a[sensor.Y_AXIS], @a[sensor.Z_AXIS])

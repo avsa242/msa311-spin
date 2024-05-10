@@ -76,6 +76,7 @@ CON
         XYZAXIS_DIS_MASK        = (XYZAXIS_DIS_BITS << XYZAXIS_DIS) ^ ODR_AXIS_ENAMASK
         ODR                     = 0
         ODR_BITS                = %1111
+        ODR_MASK                = (ODR_BITS << ODR) ^ ODR_AXIS_ENAMASK
 
     PWR_MODE_BW                 = $11
     PWR_MODE_BW_MASK            = $de

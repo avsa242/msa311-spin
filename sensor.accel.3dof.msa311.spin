@@ -95,8 +95,20 @@ PUB accel_data(ptr_x, ptr_y, ptr_z) | tmp[2]
     long[ptr_z] := ~~tmp.word[2] ~> 4
 
 
-PUB accel_data_rate(r): c
-' TBD
+PUB accel_data_rate(r=-1): c | bits
+' Set accelerometer output data rate, in Hz
+'   r: 1, 2, 4, 8, 16, 32, 64, 125, 250, 500, 1000
+'   Returns:
+'       current setting if another value is used
+    c := 0
+    readreg(core.ODR_AXIS_ENA, 1, @c)
+    case r
+        1, 2, 4, 8, 16, 32, 64, 125, 250, 500, 1000:
+            r := (c & core.ODR_MASK) | lookdownz(r: 1, 2, 4, 8, 16, 32, 64, 128, 250, 500, 1000)
+            writereg(core.ODR_AXIS_ENA, 1, @r)
+        other:
+            return lookupz( (c & core.ODR_BITS):    1, 2, 4, 8, 16, 32, 64, 128, 250, 500, ...
+                                                    1000, 1000, 1000, 1000, 1000, 1000)
 
 
 PUB accel_data_rdy(): f
