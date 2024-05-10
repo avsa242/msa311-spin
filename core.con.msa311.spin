@@ -126,6 +126,9 @@ CON
     INT_MAP_1_MASK              = $01
         INT1_NEW_DATA           = 0
 
+    INT1_MAP_MASK               = (INT_MAP_1_MASK << 8) | INT_MAP_0_MASK
+
+
     INT_CONFIG                  = $20
     INT_CONFIG_MASK             = $03
         INT1_OD                 = 1

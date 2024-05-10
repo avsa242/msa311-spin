@@ -149,10 +149,28 @@ CON
     INT_ACTIVE_Y    = 1 << 1                    ' active, y-axis
     INT_ACTIVE_X    = 1 << 0                    ' active, x-axis
 
+    INT_ACTIVE_LOW  = 0                         ' INT1 pin active logic state
+    INT_ACTIVE_HIGH = 1
+
+
 PUB accel_int_mask(): m
 ' Get accelerometer interrupt mask
     m := 0
     readreg(core.INT_SET_0, 2, @m)
+
+
+PUB accel_int_polarity(s=-1): c
+' Set interrupt pin active state/logic level
+'   s: LOW (0), HIGH (1)
+'   Returns: current setting if other values are used
+    c := 0
+    readreg(core.INT_CONFIG, 1, @c)
+    case s
+        0, 1:
+            s := ((c & core.INT1_LVL_MASK) | s)
+            writereg(core.INT_CONFIG, 1, @s)
+        other:
+            return (c & 1)
 
 
 PUB accel_int_set_mask(m)
@@ -169,6 +187,30 @@ PUB accel_int_set_mask(m)
 '   Returns: none
     m &= core.INT_SET_MASK                      ' mask off reserved bits
     writereg(core.INT_SET_0, 2, @m)             ' write INT_SET_0, INT_SET_1
+
+
+CON
+
+    { interrupts }
+    INT1_DATA_RDY   = 1 << 8                    ' new data ready
+    INT1_ORIENT     = 1 << 6                    ' sensor orientation
+    INT1_S_TAP      = 1 << 5                    ' single-tap
+    INT1_D_TAP      = 1 << 4                    ' double-tap
+    INT1_ACTIVE     = 1 << 2                    ' active, z-axis
+    INT1_FREEFALL   = 1 << 0                    ' sensor is in free-fall
+
+PUB accel_int1_set_mask(m)
+' Set accelerometer INT1 pin interrupt mask
+'   bits 8, 6..4, 2, 0 (all other bits are reserved and will be ignored if set)
+'       8:  INT1_DATA_RDY
+'       6:  INT1_ORIENT
+'       5:  INT1_S_TAP
+'       4:  INT1_D_TAP
+'       2:  INT1_ACTIVE
+'       0:  INT1_FREEFALL
+'   Returns: none
+    m &= core.INT1_MAP_MASK                     ' mask off reserved bits
+    writereg(core.INT_MAP_0, 2, @m)             ' write INT_MAP_0, INT_MAP_1
 
 
 CON
