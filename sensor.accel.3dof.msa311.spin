@@ -154,13 +154,6 @@ PUB accel_set_bias(x, y, z)
     writereg(core.OFFSET_Z, 1, @z)
 
 
-PUB dev_id(): id
-' Read device identification
-'   Returns: $13 if the device was detected
-    id := 0
-    readreg(core.PARTID, 1, @id)
-
-
 CON
 
     { interrupts }
@@ -235,6 +228,13 @@ PUB accel_int1_set_mask(m)
 '   Returns: none
     m &= core.INT1_MAP_MASK                     ' mask off reserved bits
     writereg(core.INT_MAP_0, 2, @m)             ' write INT_MAP_0, INT_MAP_1
+
+
+PUB dev_id(): id
+' Read device identification
+'   Returns: $13 if the device was detected
+    id := 0
+    readreg(core.PARTID, 1, @id)
 
 
 CON
