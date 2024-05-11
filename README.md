@@ -15,6 +15,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the MSA311 
 * Interrupts: set, read mask (data ready, free-fall, orientation, single/double-tap, active-z, y, x), enable latching, set latching duration, clear, set output mode (push-pull or open-drain)
 * Read acceleration in ADC words, g's
 * Read sensor orientation (portrait, landscape, up/down)
+* Free-fall detection
 
 
 ## Requirements

@@ -303,6 +303,54 @@ PUB dev_id(): id
     readreg(core.PARTID, 1, @id)
 
 
+PUB freefall_set_hyst(h) | tmp
+' Set free-fall detection hysteresis, in milli-g's
+'   h: 0..375 (clamped to range)
+    h := (0 #> h <# 375) / 125
+    tmp := 0
+    readreg(core.FREEFALL_HYST, 1, @tmp)
+    h := (tmp & core.FREEFALL_HY_MASK) | h
+    writereg(core.FREEFALL_HYST, 1, @h)
+
+
+PUB freefall_set_thresh(t)
+' Set free-fall detection threshold, in micro-g's
+'   t: 0..1_991550 (0..1.99g; clamped to range; default value is 375000 micro-g's)
+    t := (0 #> t <# 1_991550) / 7_810
+    writereg(core.FREEFALL_TH, 1, @t)
+
+
+PUB freefall_set_time(t)
+' Set free-fall detection time, in milliseconds
+'   t: 2..512 (clamped to range; default value is 20ms)
+    t := ((2 #> t <# 512) / 2)-1
+    writereg(core.FREEFALL_DUR, 1, @t)
+
+
+PUB freefall_hyst(): c
+' Get current free-fall detection hysteresis
+'   Returns: value in milli-g's
+    c := 0
+    readreg(core.FREEFALL_HYST, 1, @c)
+    return (c * 125)
+
+
+PUB freefall_thresh(): t
+' Get current free-fall detection threshold
+'   Returns: value in milli-g's
+    t := 0
+    readreg(core.FREEFALL_TH, 1, @t)
+    return (t * 7_810)
+
+
+PUB freefall_time(): t
+' Get current free-fall detection time
+'   Returns: value in milliseconds
+    t := 0
+    readreg(core.FREEFALL_DUR, 1, @t)
+    return ((t+1) * 2)
+
+
 CON
 
     { operating modes }
