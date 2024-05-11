@@ -4,7 +4,7 @@
     Description:    Driver for the MEMSensing Microsystems MSA311 accelerometer
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 9, 2024
+    Updated:        May 11, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -255,7 +255,7 @@ PUB opmode(m): s
     readreg(core.PWR_MODE_BW, 1, @s)
     case m
         NORMAL, LOW_PWR, SUSPEND:
-            m := (s & core.PWR_MODE_MASK) | m
+            m := (s & core.PWR_MODE_MASK) | (m << core.PWR_MODE)
             writereg(core.PWR_MODE_BW, 1, @m)
         other:
             return ((s >> core.PWR_MODE) & core.PWR_MODE_BITS)
