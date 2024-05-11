@@ -170,6 +170,14 @@ CON
     INT_ACTIVE_HIGH = 1
 
 
+PUB accel_int_clear() | tmp
+' Clear latched interrupt(s)
+    tmp := 0
+    readreg(core.INT_LATCH, 1, @tmp)
+    tmp |= core.RESET_LATCHED_INTS
+    writereg(core.INT_LATCH, 1, @tmp)
+
+
 PUB accel_int_mask(): m
 ' Get accelerometer interrupt mask
     m := 0
@@ -204,6 +212,36 @@ PUB accel_int_set_mask(m)
 '   Returns: none
     m &= core.INT_SET_MASK                      ' mask off reserved bits
     writereg(core.INT_SET_0, 2, @m)             ' write INT_SET_0, INT_SET_1
+
+
+PUB accel_int1_latch_ena(s): c
+' Enable/disable interrupt latching
+    c := 0
+    readreg(core.INT_LATCH, 1, @c)
+    case s
+        0, 1:
+            s := (c & core.LATCH_INT_MASK) | lookdownz(s: 0, 7)
+            writereg(core.INT_LATCH, 1, @s)
+        other:
+
+
+PUB accel_int1_latch_time(t): c
+' Set INT1 interrupt latching duration, in milliseconds
+'   t: 1, 2, 25, 50, 100, 250, 500, 1000, 2000, 4000, 8000
+'   Returns: current setting if other values are used
+'       (-1 if latching duration is indefinite; i.e., accel_int1_latch_ena() is used)
+    c := 0
+    readreg(core.INT_LATCH, 1, @c)
+    case t
+        1, 2, 25, 50, 100:
+            t := (c & core.LATCH_INT_MASK) | (lookdownz(t: 1, 2, 25, 50, 100) + 9)
+        250, 500, 1000, 2000, 4000, 8000:
+            t := (c & core.LATCH_INT_MASK) | lookdown(t: 250, 500, 1000, 2000, 4000, 8000)
+        other:
+            c &= core.LATCH_INT_BITS
+            if ( c > 8 )
+                return lookup(c-9: 1, 1, 2, 25, 50, 100, -1)
+            return ( lookup(c: 0, 250, 500, 1000, 2000, 4000, 8000, -1) )
 
 
 CON

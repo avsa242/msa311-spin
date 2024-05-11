@@ -4,7 +4,7 @@
     Description:    MSA311-specific constants
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 10, 2024
+    Updated:        May 11, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -140,7 +140,13 @@ CON
         INT1_LVL_MASK           = (1 << INT1_LVL) ^ INT_CONFIG_MASK
 
     INT_LATCH                   = $21
-    INT_LATCH_MASK              = $0f
+    INT_LATCH_MASK              = $8f
+        RESET_INT               = 7
+        RESET_INT_MASK          = (1 << RESET_INT) ^ INT_LATCH_MASK
+        RESET_LATCHED_INTS      = (1 << RESET_INT)
+        LATCH_INT               = 0
+        LATCH_INT_BITS          = %1111
+        LATCH_INT_MASK          = (LATCH_INT_BITS << LATCH_INT) ^ INT_LATCH_MASK
 
     FREEFALL_DUR                = $22
 
