@@ -184,9 +184,37 @@ PUB accel_int_mask(): m
     readreg(core.INT_SET_0, 2, @m)
 
 
+CON
+
+    { INT1 pin output modes }
+    INT_PP  = 0                                 ' push-pull
+    INT_OD  = 1                                 ' open-drain
+
+PUB accel_int_mode(m): c
+' Set interrupt pin output mode
+'   m:
+'       INT_PP (0): Push-pull
+'       INT_OD (1): Open-drain
+'   Returns: current setting if other values are used
+    c := 0
+    readreg(core.INT_CONFIG, 1, @c)
+    case m
+        0, 1:
+            m := (c & core.INT1_OD_MASK) | (m << core.INT1_OD)
+            writereg(core.INT_CONFIG, 1, @m)
+        other:
+            return ( (c >> core.INT1_OD) & 1 )
+
+
+CON
+
+    { interrupt polarity }
+    INT_ACTIVE_LOW  = 0
+    INT_ACTIVE_HIGH = 1
+
 PUB accel_int_polarity(s=-1): c
 ' Set interrupt pin active state/logic level
-'   s: LOW (0), HIGH (1)
+'   s: INT_ACTIVE_LOW (0), INT_ACTIVE_HIGH (1)
 '   Returns: current setting if other values are used
     c := 0
     readreg(core.INT_CONFIG, 1, @c)
