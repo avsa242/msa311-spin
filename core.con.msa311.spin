@@ -46,6 +46,8 @@ CON
         TAP_FIRST_X             = 6
         TAP_FIRST_Y             = 5
         TAP_FIRST_Z             = 4
+        TAP_FIRST               = 4
+        TAP_BITS                = %1111
         ACTIVE_SIGN             = 3
         ACTIVE_FIRST_X          = 2
         ACTIVE_FIRST_Y          = 1

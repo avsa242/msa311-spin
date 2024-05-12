@@ -353,6 +353,112 @@ PUB act_thresh(): t | s
     return (t * s)
 
 
+PUB click_latency(): t
+' Get minimum interval/wait between detection of first click and start of window during which a
+'   second click can be detected, in usec
+    t := 0
+    readreg(core.TAP_DUR, 1, @t)
+    t := ( (t >> core.TAP_QUIET) & 1 )
+    return lookupz(t: 30_000, 20_000)
+
+
+PUB click_thresh(): t | s
+' Click detection threshold
+'   Returns: current value in micro-g's
+    t := 0
+    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := lookup(s:  0_062500, ...
+                    0_125000, ...
+                    0_250000, ...
+                    0_500000)                   ' set scale of threshold reg accordingly
+    readreg(core.TAP_TH, 1, @t)
+    return (t * s)
+
+
+PUB click_time(): t
+' Click detection time
+'   Returns: current value in microseconds
+    t := 0
+    readreg(core.TAP_DUR, 1, @t)
+    t := ( (t >> core.TAP_SHOCK) & 1 )
+    return lookupz(t: 50_000, 70_000)
+
+
+PUB click_set_latency(t) | tmp
+' Set minimum interval/wait between detection of first click and start of window during which a
+'   second click can be detected, in microseconds
+'   t: 20_000, 30_000 (default: 30_000)
+    tmp := 0
+    readreg(core.TAP_DUR, 1, @tmp)
+    t := (tmp & core.TAP_QUIET_MASK) | (lookdownz(t: 30_000, 20_000) << core.TAP_QUIET)
+    writereg(core.TAP_DUR, 1, @t)
+
+
+PUB click_set_thresh(t) | s
+' Set click detection threshold, in micro-g's
+'   t: varies depending on currently set full-scale
+'   accel_scale()   range           default
+'       2           0..1_937500     0_625000
+'       4           0..3_875000     1_250000
+'       8           0..7_750000     2_500000
+'       16          0..15_500000    5_000000
+    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := lookup(s:  0_062500, ...
+                    0_125000, ...
+                    0_250000, ...
+                    0_500000)                   ' set scale of threshold reg accordingly
+    t := 0 #> (t / s) <# 31
+    writereg(core.TAP_TH, 1, @t)
+
+
+PUB click_set_time(t) | tmp
+' Set maximum elapsed interval between start of click and end of click, in microseconds
+' Events longer than this will not be considered a click
+'   t: 50_000, 70_000
+    tmp := 0
+    readreg(core.TAP_DUR, 1, @tmp)
+    t := (tmp & core.TAP_SHOCK_MASK) | (lookupz(t: 50_000, 70_000) << core.TAP_SHOCK)
+    writereg(core.TAP_DUR, 1, @t)
+
+
+PUB clicked(): s
+' Flag indicating sensor click event (single and/or double)
+    return ( (accel_int() & (S_TAP_INT | D_TAP_INT) ) <> 0 )
+
+
+PUB clicked_int(): s
+' Click event interrupt source(s)
+'   bits 3..0:
+'       3: sign of tap signal (0: positive, 1: negative)
+'       2: tap interrupt triggered by X-axis (0: no, 1: yes)
+'       1: tap interrupt triggered by Y-axis (0: no, 1: yes)
+'       0: tap interrupt triggered by Z-axis (0: no, 1: yes)
+    s := 0
+    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    return (s >> core.TAP_FIRST)
+
+
+PUB clicked_x(): s
+' Flag indicating click event was triggered by X-axis
+    s := 0
+    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    return (s & (1 << core.TAP_FIRST_X) )
+
+
+PUB clicked_y(): s
+' Flag indicating click event was triggered by Y-axis
+    s := 0
+    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    return (s & (1 << core.TAP_FIRST_Y) )
+
+
+PUB clicked_z(): s
+' Flag indicating click event was triggered by Z-axis
+    s := 0
+    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    return (s & (1 << core.TAP_FIRST_Z) )
+
+
 PUB dev_id(): id
 ' Read device identification
 '   Returns: $13 if the device was detected
