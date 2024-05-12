@@ -4,7 +4,7 @@
     Description:    Driver for the MEMSensing Microsystems MSA311 accelerometer
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 11, 2024
+    Updated:        May 12, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -156,7 +156,7 @@ PUB accel_set_bias(x, y, z)
 
 CON
 
-    { interrupts }
+    { interrupts - set }
     INT_DATA_RDY    = 1 << 12                   ' new data ready
     INT_FREEFALL    = 1 << 11                   ' sensor is in free-fall
     INT_ORIENT      = 1 << 6                    ' sensor orientation
@@ -166,9 +166,27 @@ CON
     INT_ACTIVE_Y    = 1 << 1                    ' active, y-axis
     INT_ACTIVE_X    = 1 << 0                    ' active, x-axis
 
+    { interrupts - sources }
+    ORIENT_INT      = 1 << 6
+    S_TAP_INT       = 1 << 5
+    D_TAP_INT       = 1 << 4
+    ACTIVE_INT      = 1 << 2
+    FREEFALL_INT    = 1 << 0
+
     INT_ACTIVE_LOW  = 0                         ' INT1 pin active logic state
     INT_ACTIVE_HIGH = 1
 
+
+PUB accel_int(): i
+' Interrupt source(s)
+'   bits 6..0:
+'       ORIENT_INT (6):     orientation interrupt
+'       S_TAP_INT (5):      single-tap interrupt
+'       D_TAP_INT (4):      double-tap interrupt
+'       ACTIVE_INT (2):     activity interrupt
+'       FREEFALL_INT (0):   free-fall interrupt
+    i := 0
+    readreg(core.MOTION_INT, 1, @i)
 
 PUB accel_int_clear() | tmp
 ' Clear latched interrupt(s)
@@ -294,6 +312,45 @@ PUB accel_int1_set_mask(m)
 '   Returns: none
     m &= core.INT1_MAP_MASK                     ' mask off reserved bits
     writereg(core.INT_MAP_0, 2, @m)             ' write INT_MAP_0, INT_MAP_1
+
+
+PUB act_duration(): d
+' Get currently set activity duration
+'   Returns: duration in milliseconds
+    d := 0
+    readreg(core.ACTIVE_DUR, 1, @d)
+    return (d + 1)
+
+
+PUB act_set_duration(d)
+' Set activity interrupt duration, in milliseconds
+'   d: 1..4 (clamped to range; default is 1)
+    d := (1 #> d <# 4)-1
+    writereg(core.ACTIVE_DUR, 1, @d)
+
+
+PUB act_set_thresh(t) | s
+' Set activity interrupt threshold, in micro-g's
+'   t: varies depending on currently set full-scale
+'   accel_scale()   range           default
+'       2           0..0_997050     0_039100
+'       4           0..1_991550     0_078100
+'       8           0..3_984375     0_156250
+'       16          0..7_968750     0_312500
+    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := lookup(s: 3_910, 7_810, 15_625, 31_250)' set scale of threshold reg accordingly
+    t := (t / s)
+    writereg(core.ACTIVE_TH, 1, @t)
+
+
+PUB act_thresh(): t | s
+' Get currently set activity threshold
+'   Returns: current setting in micro-g's
+    t := 0
+    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := lookup(s: 3_910, 7_810, 15_625, 31_250)' set scale of threshold reg accordingly
+    readreg(core.ACTIVE_TH, 1, @t)
+    return (t * s)
 
 
 PUB dev_id(): id
