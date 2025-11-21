@@ -1,28 +1,24 @@
 {
 ----------------------------------------------------------------------------------------------------
-    Filename:       MSA311-Demo.spin
+    Filename:       MSA311-Demo.spin2
     Description:    Demo of the MSA311 driver
     Author:         Jesse Burt
-    Started:        May 7, 2024
+    Started:        Nov 21, 2025
     Updated:        Nov 21, 2025
     Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
-' Uncomment the two lines below to use the bytecode-based I2C engine in the driver
-'#define MSA311_I2C_BC
-'#pragma exportdef(MSA311_I2C_BC)
 
 CON
 
-    _clkmode    = xtal1+pll16x
-    _xinfreq    = 5_000_000
+    _clkfreq    = 180_000_000
+    _xtlfreq    = 20_000_000
 
 
 OBJ
 
-    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    sensor: "sensor.accel.3dof.msa311" | SCL=28, SDA=29, I2C_FREQ=400_000
-    time:   "time"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
+    sensor: "sensor.accel.3dof.msa311" | SCL=8, SDA=9, I2C_FREQ=400_000
 
 
 PUB main() | a[3], axis, sign
@@ -31,9 +27,8 @@ PUB main() | a[3], axis, sign
     sensor.opmode(sensor.NORMAL)
     sensor.accel_scale(2)
     sensor.accel_int_set_mask(sensor.INT_DATA_RDY)
-
     repeat
-        repeat until sensor.accel_data_rdy()
+'        repeat until sensor.accel_data_rdy()    'xxx comment out if no readings are shown
         sensor.accel_g(@a[sensor.X_AXIS], @a[sensor.Y_AXIS], @a[sensor.Z_AXIS])
         ser.pos_xy(0, 3)
         ser.str(@"Accel (g):  ")
@@ -62,7 +57,7 @@ PUB cal_accel()
 PUB setup()
 
     ser.start()
-    time.msleep(30)
+
     ser.clear
     ser.strln(@"Serial terminal started")
 

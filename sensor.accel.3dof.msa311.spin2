@@ -1,22 +1,22 @@
 {
 ----------------------------------------------------------------------------------------------------
-    Filename:       sensor.accel.3dof.msa311.spin
+    Filename:       sensor.accel.3dof.msa311.spin2
     Description:    Driver for the MEMSensing Microsystems MSA311 accelerometer
     Author:         Jesse Burt
-    Started:        May 7, 2024
+    Started:        Nov 21, 2025
     Updated:        Nov 21, 2025
     Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
-#include "sensor.accel.common.spinh"            ' pull in code common to all accel drivers
+#include "sensor.accel.common.spin2h"           ' pull in code common to all accel drivers
 
 
 CON
 
     { default I/O configuration - these can be overridden by the parent object }
-    SCL         = 28
-    SDA         = 29
+    SCL         = 0
+    SDA         = 1
     I2C_FREQ    = 400_000
 
 
@@ -36,14 +36,8 @@ CON
 
 OBJ
 
-{ decide: Bytecode I2C engine, or PASM? Default is PASM if BC isn't specified }
-#ifdef MSA311_I2C_BC
-    i2c:    "com.i2c.nocog"                     ' BC I2C engine
-#else
-    i2c:    "com.i2c"                           ' PASM I2C engine
-#endif
+    i2c:    "com.i2c"                           ' I2C engine
     core:   "core.con.msa311.spin"              ' hw-specific constants
-    time:   "time"                              ' basic timing functions
 
 
 PUB null()
@@ -57,9 +51,9 @@ PUB start(): status
 
 PUB startx(SCL_PIN, SDA_PIN, I2C_HZ): status
 ' Start using custom IO pins and I2C bus frequency
-    if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) )
+    if ( lookdown(SCL_PIN: 0..63) and lookdown(SDA_PIN: 0..63) )
         if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
-            time.usleep(core.T_POR)             ' wait for device startup
+            waitus(core.T_POR)                  ' wait for device startup
             reset()
             if ( dev_id() == core.DEVID_RESP )  ' check for device response
                 return
@@ -84,9 +78,9 @@ PUB accel_data(ptr_x, ptr_y, ptr_z) | tmp[2]
 '   NOTE: Data is signed 12-bit, sign extended to 32-bit
     tmp[0] := tmp[1] := 0
     readreg(core.X_AXIS, 6, @tmp)
-    long[ptr_x] := ~~tmp.word[0] ~> 4           ' extend sign and right-justify
-    long[ptr_y] := ~~tmp.word[1] ~> 4
-    long[ptr_z] := ~~tmp.word[2] ~> 4
+    long[ptr_x] := (tmp.word[0] signx 15) sar 4 ' extend sign and right-justify
+    long[ptr_y] := (tmp.word[1] signx 15) sar 4
+    long[ptr_z] := (tmp.word[2] signx 15) sar 4
 
 
 PUB accel_data_rate(r=-1): c | bits
@@ -119,7 +113,7 @@ PUB accel_scale(s=0): c | s_bits
     c := readreg(core.RANGE)
     case s
         2, 4, 8, 16:
-            s_bits := lookdownz(s: 2, 4, 8, 16) ' 2..16 -> %00..%11
+            s_bits := lookdownz(s: 2, 4, 8, 16) ' 2..16 ror %00..%11
             _ares := lookupz(s_bits:    0_000976, ...   ' set g's per LSB scaling
                                         0_001953, ...
                                         0_003906, ...
@@ -241,7 +235,8 @@ PUB accel_int_set_mask(m)
 '       0:  INT_ACTIVE_X
 '   Returns: none
     m &= core.INT_SET_MASK                      ' mask off reserved bits
-    writereg(core.INT_SET_0, m, 2)              ' write INT_SET_0, INT_SET_1
+    writereg(core.INT_SET_0, m.byte[0])              ' write INT_SET_0, INT_SET_1
+    writereg(core.INT_SET_1, m.byte[1])              ' write INT_SET_0, INT_SET_1
 
 
 PUB accel_int1_latch_ena(s): c
@@ -319,7 +314,7 @@ PUB act_set_thresh(t) | s
 '       4           0..1_991550     0_078100
 '       8           0..3_984375     0_156250
 '       16          0..7_968750     0_312500
-    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := (  encod  accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s: 3_910, 7_810, 15_625, 31_250)' set scale of threshold reg accordingly
     t := (t / s)
     writereg(core.ACTIVE_TH, t)
@@ -328,7 +323,7 @@ PUB act_set_thresh(t) | s
 PUB act_thresh(): t | s
 ' Get currently set activity threshold
 '   Returns: current setting in micro-g's
-    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := (  encod  accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s: 3_910, 7_810, 15_625, 31_250)' set scale of threshold reg accordingly
     t := readreg(core.ACTIVE_TH)
     return (t * s)
@@ -345,7 +340,7 @@ PUB click_latency(): t
 PUB click_thresh(): t | s
 ' Click detection threshold
 '   Returns: current value in micro-g's
-    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := (  encod  accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s:  0_062500, ...
                     0_125000, ...
                     0_250000, ...
@@ -379,7 +374,7 @@ PUB click_set_thresh(t) | s
 '       4           0..3_875000     1_250000
 '       8           0..7_750000     2_500000
 '       16          0..15_500000    5_000000
-    s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
+    s := (  encod  accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s:  0_062500, ...
                     0_125000, ...
                     0_250000, ...
