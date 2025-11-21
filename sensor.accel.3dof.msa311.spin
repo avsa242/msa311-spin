@@ -4,8 +4,8 @@
     Description:    Driver for the MEMSensing Microsystems MSA311 accelerometer
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 12, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Nov 21, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -32,12 +32,6 @@ CON
     { I2C-specific I/O }
     SLAVE_WR    = core.SLAVE_ADDR
     SLAVE_RD    = core.SLAVE_ADDR|1
-
-    DEF_SCL     = 28
-    DEF_SDA     = 29
-    DEF_HZ      = 100_000
-    I2C_MAX_FREQ= core.I2C_MAX_FREQ
-
 
 
 VAR
@@ -103,12 +97,11 @@ PUB accel_data_rate(r=-1): c | bits
 '   r: 1, 2, 4, 8, 16, 32, 64, 125, 250, 500, 1000
 '   Returns:
 '       current setting if another value is used
-    c := 0
-    readreg(core.ODR_AXIS_ENA, 1, @c)
+    c := readreg(core.ODR_AXIS_ENA)
     case r
         1, 2, 4, 8, 16, 32, 64, 125, 250, 500, 1000:
             r := (c & core.ODR_MASK) | lookdownz(r: 1, 2, 4, 8, 16, 32, 64, 128, 250, 500, 1000)
-            writereg(core.ODR_AXIS_ENA, 1, @r)
+            writereg(core.ODR_AXIS_ENA, r)
         other:
             return lookupz( (c & core.ODR_BITS):    1, 2, 4, 8, 16, 32, 64, 128, 250, 500, ...
                                                     1000, 1000, 1000, 1000, 1000, 1000)
@@ -117,8 +110,7 @@ PUB accel_data_rate(r=-1): c | bits
 PUB accel_data_rdy(): f
 ' Flag indicating new accelerometer data is available
 '   NOTE: To use this function, the interrupt INT_DATA_RDY must be set using accel_int_set_mask()
-    f := 0
-    readreg(core.DATA_INT, 1, @f)
+    f := readreg(core.DATA_INT)
     return ( (f & 1) == 1 )
 
 
@@ -127,8 +119,7 @@ PUB accel_scale(s=0): c | s_bits
 '   s: 2, 4, 8, 16
 '   Returns:
 '       current setting if another value is used
-    c := 0
-    readreg(core.RANGE, 1, @c)
+    c := readreg(core.RANGE)
     case s
         2, 4, 8, 16:
             s_bits := lookdownz(s: 2, 4, 8, 16) ' 2..16 -> %00..%11
@@ -137,7 +128,7 @@ PUB accel_scale(s=0): c | s_bits
                                         0_003906, ...
                                         0_007812)
             s := (c & core.FS_MASK) | s_bits
-            writereg(core.RANGE, 1, @s)
+            writereg(core.RANGE, s)
         other:
             return lookupz((c & core.FS_BITS): 2, 4, 8, 16)
 
@@ -149,9 +140,9 @@ PUB accel_set_bias(x, y, z)
     y := -128 #> y <# 127
     z := -128 #> z <# 127
 
-    writereg(core.OFFSET_X, 1, @x)
-    writereg(core.OFFSET_Y, 1, @y)
-    writereg(core.OFFSET_Z, 1, @z)
+    writereg(core.OFFSET_X, x)
+    writereg(core.OFFSET_Y, y)
+    writereg(core.OFFSET_Z, z)
 
 
 CON
@@ -185,21 +176,18 @@ PUB accel_int(): i
 '       D_TAP_INT (4):      double-tap interrupt
 '       ACTIVE_INT (2):     activity interrupt
 '       FREEFALL_INT (0):   free-fall interrupt
-    i := 0
-    readreg(core.MOTION_INT, 1, @i)
+    return readreg(core.MOTION_INT)
 
 PUB accel_int_clear() | tmp
 ' Clear latched interrupt(s)
-    tmp := 0
-    readreg(core.INT_LATCH, 1, @tmp)
+    tmp := readreg(core.INT_LATCH)
     tmp |= core.RESET_LATCHED_INTS
-    writereg(core.INT_LATCH, 1, @tmp)
+    writereg(core.INT_LATCH, tmp)
 
 
 PUB accel_int_mask(): m
 ' Get accelerometer interrupt mask
-    m := 0
-    readreg(core.INT_SET_0, 2, @m)
+    return readreg(core.INT_SET_0, 2)
 
 
 CON
@@ -214,12 +202,11 @@ PUB accel_int_mode(m): c
 '       INT_PP (0): Push-pull
 '       INT_OD (1): Open-drain
 '   Returns: current setting if other values are used
-    c := 0
-    readreg(core.INT_CONFIG, 1, @c)
+    c := readreg(core.INT_CONFIG)
     case m
         0, 1:
             m := (c & core.INT1_OD_MASK) | (m << core.INT1_OD)
-            writereg(core.INT_CONFIG, 1, @m)
+            writereg(core.INT_CONFIG, m)
         other:
             return ( (c >> core.INT1_OD) & 1 )
 
@@ -234,12 +221,11 @@ PUB accel_int_polarity(s=-1): c
 ' Set interrupt pin active state/logic level
 '   s: INT_ACTIVE_LOW (0), INT_ACTIVE_HIGH (1)
 '   Returns: current setting if other values are used
-    c := 0
-    readreg(core.INT_CONFIG, 1, @c)
+    c := readreg(core.INT_CONFIG)
     case s
         0, 1:
             s := ((c & core.INT1_LVL_MASK) | s)
-            writereg(core.INT_CONFIG, 1, @s)
+            writereg(core.INT_CONFIG, s)
         other:
             return (c & 1)
 
@@ -257,18 +243,18 @@ PUB accel_int_set_mask(m)
 '       0:  INT_ACTIVE_X
 '   Returns: none
     m &= core.INT_SET_MASK                      ' mask off reserved bits
-    writereg(core.INT_SET_0, 2, @m)             ' write INT_SET_0, INT_SET_1
+    writereg(core.INT_SET_0, m, 2)              ' write INT_SET_0, INT_SET_1
 
 
 PUB accel_int1_latch_ena(s): c
 ' Enable/disable interrupt latching
-    c := 0
-    readreg(core.INT_LATCH, 1, @c)
+    c := readreg(core.INT_LATCH)
     case s
         0, 1:
             s := (c & core.LATCH_INT_MASK) | lookdownz(s: 0, 7)
-            writereg(core.INT_LATCH, 1, @s)
+            writereg(core.INT_LATCH, s)
         other:
+            return
 
 
 PUB accel_int1_latch_time(t): c
@@ -276,8 +262,7 @@ PUB accel_int1_latch_time(t): c
 '   t: 1, 2, 25, 50, 100, 250, 500, 1000, 2000, 4000, 8000
 '   Returns: current setting if other values are used
 '       (-1 if latching duration is indefinite; i.e., accel_int1_latch_ena() is used)
-    c := 0
-    readreg(core.INT_LATCH, 1, @c)
+    c := readreg(core.INT_LATCH)
     case t
         1, 2, 25, 50, 100:
             t := (c & core.LATCH_INT_MASK) | (lookdownz(t: 1, 2, 25, 50, 100) + 9)
@@ -311,14 +296,13 @@ PUB accel_int1_set_mask(m)
 '       0:  INT1_FREEFALL
 '   Returns: none
     m &= core.INT1_MAP_MASK                     ' mask off reserved bits
-    writereg(core.INT_MAP_0, 2, @m)             ' write INT_MAP_0, INT_MAP_1
+    writereg(core.INT_MAP_0, m, 2)              ' write INT_MAP_0, INT_MAP_1
 
 
 PUB act_duration(): d
 ' Get currently set activity duration
 '   Returns: duration in milliseconds
-    d := 0
-    readreg(core.ACTIVE_DUR, 1, @d)
+    d := readreg(core.ACTIVE_DUR)
     return (d + 1)
 
 
@@ -326,7 +310,7 @@ PUB act_set_duration(d)
 ' Set activity interrupt duration, in milliseconds
 '   d: 1..4 (clamped to range; default is 1)
     d := (1 #> d <# 4)-1
-    writereg(core.ACTIVE_DUR, 1, @d)
+    writereg(core.ACTIVE_DUR, d)
 
 
 PUB act_set_thresh(t) | s
@@ -340,24 +324,22 @@ PUB act_set_thresh(t) | s
     s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s: 3_910, 7_810, 15_625, 31_250)' set scale of threshold reg accordingly
     t := (t / s)
-    writereg(core.ACTIVE_TH, 1, @t)
+    writereg(core.ACTIVE_TH, t)
 
 
 PUB act_thresh(): t | s
 ' Get currently set activity threshold
 '   Returns: current setting in micro-g's
-    t := 0
     s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s: 3_910, 7_810, 15_625, 31_250)' set scale of threshold reg accordingly
-    readreg(core.ACTIVE_TH, 1, @t)
+    t := readreg(core.ACTIVE_TH)
     return (t * s)
 
 
 PUB click_latency(): t
 ' Get minimum interval/wait between detection of first click and start of window during which a
 '   second click can be detected, in usec
-    t := 0
-    readreg(core.TAP_DUR, 1, @t)
+    t := readreg(core.TAP_DUR)
     t := ( (t >> core.TAP_QUIET) & 1 )
     return lookupz(t: 30_000, 20_000)
 
@@ -365,21 +347,19 @@ PUB click_latency(): t
 PUB click_thresh(): t | s
 ' Click detection threshold
 '   Returns: current value in micro-g's
-    t := 0
     s := ( >| accel_scale() )-1                 ' map current full-scale range (2..16) to 1..4
     s := lookup(s:  0_062500, ...
                     0_125000, ...
                     0_250000, ...
                     0_500000)                   ' set scale of threshold reg accordingly
-    readreg(core.TAP_TH, 1, @t)
+    t := readreg(core.TAP_TH)
     return (t * s)
 
 
 PUB click_time(): t
 ' Click detection time
 '   Returns: current value in microseconds
-    t := 0
-    readreg(core.TAP_DUR, 1, @t)
+    t := readreg(core.TAP_DUR)
     t := ( (t >> core.TAP_SHOCK) & 1 )
     return lookupz(t: 50_000, 70_000)
 
@@ -388,10 +368,9 @@ PUB click_set_latency(t) | tmp
 ' Set minimum interval/wait between detection of first click and start of window during which a
 '   second click can be detected, in microseconds
 '   t: 20_000, 30_000 (default: 30_000)
-    tmp := 0
-    readreg(core.TAP_DUR, 1, @tmp)
+    tmp := readreg(core.TAP_DUR)
     t := (tmp & core.TAP_QUIET_MASK) | (lookdownz(t: 30_000, 20_000) << core.TAP_QUIET)
-    writereg(core.TAP_DUR, 1, @t)
+    writereg(core.TAP_DUR, t)
 
 
 PUB click_set_thresh(t) | s
@@ -408,17 +387,16 @@ PUB click_set_thresh(t) | s
                     0_250000, ...
                     0_500000)                   ' set scale of threshold reg accordingly
     t := 0 #> (t / s) <# 31
-    writereg(core.TAP_TH, 1, @t)
+    writereg(core.TAP_TH, t)
 
 
 PUB click_set_time(t) | tmp
 ' Set maximum elapsed interval between start of click and end of click, in microseconds
 ' Events longer than this will not be considered a click
 '   t: 50_000, 70_000
-    tmp := 0
-    readreg(core.TAP_DUR, 1, @tmp)
+    tmp := readreg(core.TAP_DUR)
     t := (tmp & core.TAP_SHOCK_MASK) | (lookupz(t: 50_000, 70_000) << core.TAP_SHOCK)
-    writereg(core.TAP_DUR, 1, @t)
+    writereg(core.TAP_DUR, t)
 
 
 PUB clicked(): s
@@ -433,84 +411,75 @@ PUB clicked_int(): s
 '       2: tap interrupt triggered by X-axis (0: no, 1: yes)
 '       1: tap interrupt triggered by Y-axis (0: no, 1: yes)
 '       0: tap interrupt triggered by Z-axis (0: no, 1: yes)
-    s := 0
-    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    s := readreg(core.TAP_ACTIVE_ST)
     return (s >> core.TAP_FIRST)
 
 
 PUB clicked_x(): s
 ' Flag indicating click event was triggered by X-axis
-    s := 0
-    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    s := readreg(core.TAP_ACTIVE_ST)
     return (s & (1 << core.TAP_FIRST_X) )
 
 
 PUB clicked_y(): s
 ' Flag indicating click event was triggered by Y-axis
-    s := 0
-    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    s := readreg(core.TAP_ACTIVE_ST)
     return (s & (1 << core.TAP_FIRST_Y) )
 
 
 PUB clicked_z(): s
 ' Flag indicating click event was triggered by Z-axis
-    s := 0
-    readreg(core.TAP_ACTIVE_ST, 1, @s)
+    s := readreg(core.TAP_ACTIVE_ST)
     return (s & (1 << core.TAP_FIRST_Z) )
 
 
 PUB dev_id(): id
 ' Read device identification
 '   Returns: $13 if the device was detected
-    id := 0
-    readreg(core.PARTID, 1, @id)
+    return readreg(core.PARTID)
 
 
 PUB freefall_set_hyst(h) | tmp
 ' Set free-fall detection hysteresis, in milli-g's
 '   h: 0..375 (clamped to range)
     h := (0 #> h <# 375) / 125
-    tmp := 0
-    readreg(core.FREEFALL_HYST, 1, @tmp)
+    tmp := readreg(core.FREEFALL_HYST)
     h := (tmp & core.FREEFALL_HY_MASK) | h
-    writereg(core.FREEFALL_HYST, 1, @h)
+    writereg(core.FREEFALL_HYST, h)
 
 
 PUB freefall_set_thresh(t)
 ' Set free-fall detection threshold, in micro-g's
 '   t: 0..1_991550 (0..1.99g; clamped to range; default value is 375000 micro-g's)
     t := (0 #> t <# 1_991550) / 7_810
-    writereg(core.FREEFALL_TH, 1, @t)
+    writereg(core.FREEFALL_TH, t)
 
 
 PUB freefall_set_time(t)
 ' Set free-fall detection time, in milliseconds
 '   t: 2..512 (clamped to range; default value is 20ms)
     t := ((2 #> t <# 512) / 2)-1
-    writereg(core.FREEFALL_DUR, 1, @t)
+    writereg(core.FREEFALL_DUR, t)
 
 
 PUB freefall_hyst(): c
 ' Get current free-fall detection hysteresis
 '   Returns: value in milli-g's
-    c := 0
-    readreg(core.FREEFALL_HYST, 1, @c)
+    c := readreg(core.FREEFALL_HYST)
     return (c * 125)
 
 
 PUB freefall_thresh(): t
 ' Get current free-fall detection threshold
 '   Returns: value in milli-g's
-    t := 0
-    readreg(core.FREEFALL_TH, 1, @t)
+    t := readreg(core.FREEFALL_TH)
     return (t * 7_810)
 
 
 PUB freefall_time(): t
 ' Get current free-fall detection time
 '   Returns: value in milliseconds
-    t := 0
-    readreg(core.FREEFALL_DUR, 1, @t)
+    t := readreg(core.FREEFALL_DUR)
     return ((t+1) * 2)
 
 
@@ -528,12 +497,11 @@ PUB opmode(m): s
 '   SUSPEND (3):    suspend (retain settings, but measuring is halted)
 '   Returns:
 '       current setting if another value is used
-    s := 0
-    readreg(core.PWR_MODE_BW, 1, @s)
+    s := readreg(core.PWR_MODE_BW)
     case m
         NORMAL, LOW_PWR, SUSPEND:
             m := (s & core.PWR_MODE_MASK) | (m << core.PWR_MODE)
-            writereg(core.PWR_MODE_BW, 1, @m)
+            writereg(core.PWR_MODE_BW, m)
         other:
             return ((s >> core.PWR_MODE) & core.PWR_MODE_BITS)
 
@@ -561,50 +529,47 @@ PUB orientation(): o
 '           Z_DOWN (1):         downward looking
 '   NOTE: INT_ORIENT must be set using accel_int_set_mask() in order for this method to
 '       return valid data.
-    o := 0
-    readreg(core.ORIENTATION_ST, 1, @o)
+    o := readreg(core.ORIENTATION_ST)
     return (o >> core.ORIENT_XYZ)
 
 
 PUB reset() | tmp
 ' Reset the device
     tmp := core.RESET
-    writereg(core.SOFT_RESET, 1, @tmp)
+    writereg(core.SOFT_RESET, tmp)
 
 
-PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt
-' Read nr_bytes from the device into ptr_buff
-    case reg_nr                                 ' validate register num
-        $01..$07, $09..$0c, $0f..$12, $16, $17, $19, $1a, $20..$24, $27, $28, $2a..$2d, ...
-        $38..$3a:
-            cmd_pkt.byte[0] := SLAVE_WR
-            cmd_pkt.byte[1] := reg_nr
-            i2c.start()
-            i2c.wrblock_lsbf(@cmd_pkt, 2)
-            i2c.start()
-            i2c.wr_byte(SLAVE_RD)
-            i2c.rdblock_lsbf(ptr_buff, nr_bytes, i2c.NAK)
-            i2c.stop()
-        other:                                  ' invalid reg_nr
-            return
+PRI readreg(reg_nr, len=1, p_dest=0): v | cmd_pkt
+' Read the current value from a register
+    cmd_pkt.byte[0] := SLAVE_WR
+    cmd_pkt.byte[1] := reg_nr
 
-PRI writereg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt
-' Write nr_bytes to the device from ptr_buff
-    case reg_nr
-        $00, $0f..$12, $16, $17, $19, $1a, $20..$24, $27, $28, $2a..$2d, $38..$3a:
-            cmd_pkt.byte[0] := SLAVE_WR
-            cmd_pkt.byte[1] := reg_nr
-            i2c.start()
-            i2c.wrblock_lsbf(@cmd_pkt, 2)
-            i2c.wrblock_lsbf(ptr_buff, nr_bytes)
-            i2c.stop()
-        other:
-            return
+    if ( reg_nr <> core.X_AXIS )                ' return the value directly for all regs except
+        p_dest := @v                            '   the output data
+    v := 0
+    i2c.start()
+    i2c.wrblock_lsbf(@cmd_pkt, 2)
+    i2c.start()
+    i2c.wr_byte(SLAVE_RD)
+    i2c.rdblock_lsbf(p_dest, len, i2c.NAK)
+    i2c.stop()
+
+
+PRI writereg(reg_nr, val, len=1) | cmd_pkt
+' Write a value to a register
+    cmd_pkt.byte[0] := SLAVE_WR
+    cmd_pkt.byte[1] := reg_nr
+    cmd_pkt.byte[2] := val.byte[0]
+    cmd_pkt.byte[3] := val.byte[1]
+
+    i2c.start()
+    i2c.wrblock_lsbf(@cmd_pkt, 2+len)
+    i2c.stop()
 
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
