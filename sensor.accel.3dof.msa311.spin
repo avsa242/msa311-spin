@@ -178,6 +178,7 @@ PUB accel_int(): i
 '       FREEFALL_INT (0):   free-fall interrupt
     return readreg(core.MOTION_INT)
 
+
 PUB accel_int_clear() | tmp
 ' Clear latched interrupt(s)
     tmp := readreg(core.INT_LATCH)

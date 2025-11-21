@@ -4,23 +4,22 @@
     Description:    Demo of the MSA311 driver
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        May 10, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Nov 21, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
 CON
 
-    _clkmode    = cfg._clkmode
-    _xinfreq    = cfg._xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
 
 OBJ
 
-    cfg:    "boardcfg.flip"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    time:   "time"
     sensor: "sensor.accel.3dof.msa311" | SCL=28, SDA=29, I2C_FREQ=400_000
+    time:   "time"
 
 
 PUB main() | a[3], axis, sign
@@ -73,7 +72,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
