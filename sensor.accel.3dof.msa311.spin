@@ -45,7 +45,7 @@ OBJ
 #else
     i2c:    "com.i2c"                           ' PASM I2C engine
 #endif
-    core:   "core.con.msa311.spin"              ' hw-specific low-level const's
+    core:   "core.con.msa311.spin"              ' hw-specific constants
     time:   "time"                              ' basic timing functions
 
 
@@ -54,7 +54,7 @@ PUB null()
 
 
 PUB start(): status
-' Start using "standard" Propeller I2C pins and 100kHz
+' Start using default I/O settings
     return startx(SCL, SDA, I2C_FREQ)
 
 
