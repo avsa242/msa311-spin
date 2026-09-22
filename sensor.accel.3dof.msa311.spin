@@ -4,8 +4,8 @@
     Description:    Driver for the MEMSensing Microsystems MSA311 accelerometer
     Author:         Jesse Burt
     Started:        May 7, 2024
-    Updated:        Nov 21, 2025
-    Copyright (c) 2025 - See end of file for terms of use.
+    Updated:        Sep 22, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -271,6 +271,8 @@ PUB accel_int1_latch_time(t): c
             if ( c > 8 )
                 return lookup(c-9: 1, 1, 2, 25, 50, 100, -1)
             return ( lookup(c: 0, 250, 500, 1000, 2000, 4000, 8000, -1) )
+
+    writereg(core.INT_LATCH, t)
 
 
 CON
@@ -567,7 +569,7 @@ PRI writereg(reg_nr, val, len=1) | cmd_pkt
 
 DAT
 {
-Copyright 2025 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
